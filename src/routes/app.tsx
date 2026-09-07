@@ -1,9 +1,31 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
-import { Sparkles, Wand2, Star, BarChart3, Settings, Plus } from "lucide-react";
+import { useState } from "react";
+import {
+  Sparkles,
+  Wand2,
+  Star,
+  BarChart3,
+  Settings,
+  Plus,
+  LogIn,
+  LogOut,
+  User,
+  ShieldCheck,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthModal } from "@/components/AuthModal";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -13,10 +35,16 @@ const nav = [
   { to: "/app/generator", label: "Ad Generator", icon: Wand2 },
   { to: "/app/library", label: "Saved Library", icon: Star },
   { to: "/app/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/app/settings", label: "Settings", icon: Settings },
+  { to: "/app/settings", label: "Admin & Settings", icon: Settings },
 ] as const;
 
 function AppLayout() {
+  const { user, profile, signOut } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  const credits = profile?.credits ?? 50;
+  const maxCredits = 50;
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
@@ -30,24 +58,87 @@ function AppLayout() {
           <div className="flex items-center gap-2 sm:gap-3">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Badge variant="glow" className="whitespace-nowrap">
-                  150 / 200 Credits
+                <Badge
+                  variant="glow"
+                  className="cursor-pointer whitespace-nowrap"
+                  onClick={() => !user && setAuthModalOpen(true)}
+                >
+                  <Sparkles className="mr-1 h-3 w-3 text-cyan" />
+                  {credits} / {maxCredits} Credits
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent>Credits reset on the 1st of each month</TooltipContent>
+              <TooltipContent>
+                {user
+                  ? "Live balance linked to your Supabase Profile"
+                  : "Click to sign in and keep your balance"}
+              </TooltipContent>
             </Tooltip>
+
             <Button asChild variant="gradient" size="sm">
               <Link to="/app/generator">
                 <Plus className="mr-1 h-4 w-4" /> New campaign
               </Link>
             </Button>
-            <Avatar className="h-8 w-8 shrink-0 border border-border">
-              <AvatarImage
-                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=faces"
-                alt="Maya Ortiz"
-              />
-              <AvatarFallback>MO</AvatarFallback>
-            </Avatar>
+
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
+                    <Avatar className="h-8 w-8 shrink-0 border border-border">
+                      <AvatarImage
+                        src={
+                          profile?.avatar_url ||
+                          `https://api.dicebear.com/7.x/bottts/svg?seed=${user.id}`
+                        }
+                        alt={profile?.full_name || user.email || "User"}
+                      />
+                      <AvatarFallback>
+                        {(profile?.full_name || user.email || "U").slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="glass w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {profile?.full_name || "Growth Hacker"}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/app/settings" className="flex items-center cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Account & Admin</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-xs text-muted-foreground">
+                    <ShieldCheck className="mr-2 h-4 w-4 text-cyan" />
+                    <span>Supabase Auth: Active</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => signOut()}
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setAuthModalOpen(true)}
+              >
+                <LogIn className="h-3.5 w-3.5" />
+                <span>Sign In</span>
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -85,11 +176,14 @@ function AppLayout() {
               className="flex flex-col items-center gap-1 py-2.5 text-[11px]"
             >
               <n.icon className="h-4 w-4" />
-              {n.label.split(" ")[1] ?? n.label}
+              {n.label.split(" ")[0]}
             </Link>
           ))}
         </div>
       </nav>
+
+      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </div>
   );
 }
+

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Loader2, Sparkles, Wand2 } from "lucide-react";
+import { Loader2, Sparkles, Wand2, Zap } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +16,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { AdCard } from "@/components/AdCard";
 import { generateAds, type GeneratedAd, type Platform, type Tone } from "@/lib/advibe-data";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Route = createFileRoute("/app/generator")({
   head: () => ({
@@ -47,6 +49,7 @@ const seed = generateAds({
 });
 
 function Generator() {
+  const { consumeCredit, profile } = useAuth();
   const [product, setProduct] = useState("Lumen Sleep Mask");
   const [description, setDescription] = useState(
     "A weighted, cooling sleep mask that blocks 100% of light and helps you fall asleep in under 9 minutes.",
@@ -58,13 +61,18 @@ function Generator() {
   const [loading, setLoading] = useState(false);
   const [ads, setAds] = useState<GeneratedAd[]>(seed);
 
-  const run = () => {
+  const run = async () => {
+    const ok = await consumeCredit();
+    if (!ok) return;
+
     setLoading(true);
     setTimeout(() => {
       setAds(generateAds({ product, description, audience, tone, platform, count }));
       setLoading(false);
-    }, 1400);
+      toast.success(`Generated ${count} variants (-1 credit) ✨`);
+    }, 1200);
   };
+
 
   return (
     <div className="space-y-6">
