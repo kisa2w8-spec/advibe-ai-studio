@@ -36,18 +36,22 @@ const CREDITS_PREFIX = "advibe_credits_";
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(() => {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Hydrate profile from localStorage on mount (client only)
+  useEffect(() => {
     if (typeof window !== "undefined") {
       try {
         const saved = localStorage.getItem(ACTIVE_PROFILE_KEY);
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+          setProfile(JSON.parse(saved));
+        }
       } catch (e) {
         console.error(e);
       }
     }
-    return null;
-  });
-  const [loading, setLoading] = useState(true);
+  }, []);
 
   // Sync active profile to localStorage and per-user credit store
   useEffect(() => {
