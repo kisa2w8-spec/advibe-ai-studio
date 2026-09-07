@@ -66,9 +66,9 @@ export function generateAds(input: {
     id: `${Date.now()}-${i}`,
     platform: input.platform,
     tone: input.tone,
-    hook: fill(hooks[input.tone][i % 3], input.product, input.audience, input.description),
-    body: fill(bodies[i % bodies.length], input.product, input.audience, input.description),
-    cta: ctas[(i + 1) % ctas.length],
+    hook: fill(hooks[input.tone][i % 3]!, input.product, input.audience, input.description),
+    body: fill(bodies[i % bodies.length]!, input.product, input.audience, input.description),
+    cta: ctas[(i + 1) % ctas.length]!,
     ctr: Math.round((2.6 + Math.random() * 4.2) * 10) / 10,
   }));
 }
