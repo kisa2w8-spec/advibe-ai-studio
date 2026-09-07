@@ -9,11 +9,16 @@ import {
   ArrowRight,
   Check,
   Zap,
+  LogIn,
+  LogOut,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthModal } from "@/components/AuthModal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -44,10 +49,6 @@ const rotating = [
   { hook: "We cancelled 3 tools after switching to this", cta: "Start free trial", ctr: 5.1 },
   { hook: "Last 48 hours at launch pricing", cta: "Claim your spot →", ctr: 4.8 },
 ];
-
-import { useAuth } from "@/contexts/AuthContext";
-import { AuthModal } from "@/components/AuthModal";
-import { LogIn, UserCheck } from "lucide-react";
 
 function Nav() {
   const { user, profile, signOut } = useAuth();
