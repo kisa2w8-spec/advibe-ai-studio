@@ -61,15 +61,15 @@ function AppLayout() {
                 <Badge
                   variant="glow"
                   className="cursor-pointer whitespace-nowrap"
-                  onClick={() => !user && setAuthModalOpen(true)}
+                  onClick={() => !profile && setAuthModalOpen(true)}
                 >
                   <Sparkles className="mr-1 h-3 w-3 text-cyan" />
                   {credits} / {maxCredits} Credits
                 </Badge>
               </TooltipTrigger>
               <TooltipContent>
-                {user
-                  ? "Live balance linked to your Supabase Profile"
+                {profile
+                  ? `Live balance for ${profile.full_name}`
                   : "Click to sign in and keep your balance"}
               </TooltipContent>
             </Tooltip>
@@ -80,54 +80,75 @@ function AppLayout() {
               </Link>
             </Button>
 
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
-                    <Avatar className="h-8 w-8 shrink-0 border border-border">
-                      <AvatarImage
-                        src={
-                          profile?.avatar_url ||
-                          `https://api.dicebear.com/7.x/bottts/svg?seed=${user.id}`
-                        }
-                        alt={profile?.full_name || user.email || "User"}
-                      />
-                      <AvatarFallback>
-                        {(profile?.full_name || user.email || "U").slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="glass w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {profile?.full_name || "Growth Hacker"}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/app/settings" className="flex items-center cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Account & Admin</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-xs text-muted-foreground">
-                    <ShieldCheck className="mr-2 h-4 w-4 text-cyan" />
-                    <span>Supabase Auth: Active</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => signOut()}
-                    className="cursor-pointer text-destructive focus:text-destructive"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            {profile ? (
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 border-border/80 bg-surface/50 px-2 sm:px-3"
+                    >
+                      <Avatar className="h-6 w-6 border border-border">
+                        <AvatarImage
+                          src={
+                            profile.avatar_url ||
+                            `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.id}`
+                          }
+                          alt={profile.full_name}
+                        />
+                        <AvatarFallback>
+                          {profile.full_name.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden max-w-[120px] truncate text-xs font-medium sm:inline-block">
+                        {profile.full_name}
+                      </span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="glass w-60" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-semibold leading-none">{profile.full_name}</p>
+                        <p className="text-xs leading-none text-muted-foreground">{profile.email}</p>
+                        <p className="mt-1 text-[11px] text-cyan font-mono">{profile.plan} Plan</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/app/settings" className="flex items-center cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Account & Admin</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setAuthModalOpen(true)}
+                      className="cursor-pointer"
+                    >
+                      <Sparkles className="mr-2 h-4 w-4 text-cyan" />
+                      <span>Switch Account Persona</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => signOut()}
+                      className="cursor-pointer text-destructive focus:text-destructive"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign Out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs text-muted-foreground hover:text-destructive"
+                  onClick={() => signOut()}
+                  title="Sign out of current account"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
             ) : (
               <Button
                 variant="outline"
@@ -136,7 +157,7 @@ function AppLayout() {
                 onClick={() => setAuthModalOpen(true)}
               >
                 <LogIn className="h-3.5 w-3.5" />
-                <span>Sign In</span>
+                <span>Sign In / Register</span>
               </Button>
             )}
           </div>

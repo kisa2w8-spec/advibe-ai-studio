@@ -50,7 +50,7 @@ import { AuthModal } from "@/components/AuthModal";
 import { LogIn, UserCheck } from "lucide-react";
 
 function Nav() {
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
 
   return (
@@ -75,12 +75,23 @@ function Nav() {
         </nav>
         <div className="flex items-center gap-3">
           {profile ? (
-            <Button asChild variant="outline" size="sm" className="gap-2">
-              <Link to="/app/settings">
-                <UserCheck className="h-3.5 w-3.5 text-cyan" />
-                <span className="max-w-28 truncate">{profile.full_name}</span>
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" size="sm" className="gap-2 border-border/80">
+                <Link to="/app/settings">
+                  <UserCheck className="h-3.5 w-3.5 text-cyan" />
+                  <span className="max-w-28 truncate">{profile.full_name}</span>
+                </Link>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs text-muted-foreground hover:text-destructive"
+                onClick={() => signOut()}
+                title="Sign Out"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           ) : (
             <Button
               variant="outline"
@@ -89,12 +100,12 @@ function Nav() {
               onClick={() => setAuthOpen(true)}
             >
               <LogIn className="h-3.5 w-3.5" />
-              <span>Sign In</span>
+              <span>Sign In / Register</span>
             </Button>
           )}
 
           <Button asChild variant="gradient" size="sm">
-            <Link to="/app/generator">Launch App</Link>
+            <Link to="/app/generator">Launch Studio</Link>
           </Button>
         </div>
       </div>

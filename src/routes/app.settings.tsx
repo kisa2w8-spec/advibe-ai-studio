@@ -41,6 +41,13 @@ function SettingsPage() {
   const [emoji, setEmoji] = useState(true);
   const [wsName, setWsName] = useState(profile?.full_name || "Lumen Growth Team");
 
+  // Keep workspace name in sync whenever profile changes
+  useEffect(() => {
+    if (profile?.full_name) {
+      setWsName(profile.full_name);
+    }
+  }, [profile?.id, profile?.full_name]);
+
   const handleAddCredits = async () => {
     await addCredits(50);
   };
@@ -63,19 +70,24 @@ function SettingsPage() {
             </div>
             <div>
               <h2 className="font-display text-lg font-semibold">
-                {user ? (profile?.full_name || "Active Member") : "Guest Mode (Local)"}
+                {profile ? profile.full_name : "Guest Mode (Not logged in)"}
               </h2>
               <p className="text-xs text-muted-foreground">
-                {user ? user.email : "Not logged into Supabase Auth yet"}
+                {profile ? `${profile.email} · ${profile.plan} Plan` : "Sign in to save credits & ads to your account"}
               </p>
             </div>
           </div>
 
-          <div>
-            {user ? (
-              <Button variant="outline" size="sm" onClick={() => signOut()}>
-                <LogOut className="mr-1.5 h-3.5 w-3.5" /> Sign Out
-              </Button>
+          <div className="flex items-center gap-2">
+            {profile ? (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setAuthModalOpen(true)}>
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5 text-cyan" /> Switch Persona
+                </Button>
+                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => signOut()}>
+                  <LogOut className="mr-1.5 h-3.5 w-3.5" /> Sign Out
+                </Button>
+              </>
             ) : (
               <Button variant="gradient" size="sm" onClick={() => setAuthModalOpen(true)}>
                 <LogIn className="mr-1.5 h-3.5 w-3.5" /> Sign In / Register
@@ -84,21 +96,21 @@ function SettingsPage() {
           </div>
         </div>
 
-        {user && (
+        {profile && (
           <div className="grid grid-cols-1 gap-3 rounded-xl bg-secondary/30 p-4 sm:grid-cols-3 text-xs">
             <div>
               <span className="text-muted-foreground block">User UUID:</span>
-              <span className="font-mono truncate block text-[11px] text-cyan">{user.id}</span>
+              <span className="font-mono truncate block text-[11px] text-cyan">{profile.id}</span>
             </div>
             <div>
               <span className="text-muted-foreground block">Role & Plan:</span>
               <span className="font-medium text-foreground">
-                {profile?.role || "Owner"} · {profile?.plan || "Pro"}
+                {profile.role || "Owner"} · {profile.plan || "Pro"}
               </span>
             </div>
             <div>
-              <span className="text-muted-foreground block">Auth Provider:</span>
-              <span className="font-mono text-[11px] text-muted-foreground">supabase-auth / email</span>
+              <span className="text-muted-foreground block">Auth & DB Status:</span>
+              <span className="font-mono text-[11px] text-emerald-400">● Connected (PostgreSQL)</span>
             </div>
           </div>
         )}

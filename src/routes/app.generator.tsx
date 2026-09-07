@@ -62,17 +62,16 @@ function Generator() {
   const [ads, setAds] = useState<GeneratedAd[]>(seed);
 
   const run = async () => {
-    const ok = await consumeCredit();
+    const ok = await consumeCredit(count);
     if (!ok) return;
 
     setLoading(true);
     setTimeout(() => {
       setAds(generateAds({ product, description, audience, tone, platform, count }));
       setLoading(false);
-      toast.success(`Generated ${count} variants (-1 credit) ✨`);
+      toast.success(`Generated ${count} variants (-${count} credits) ✨`);
     }, 1200);
   };
-
 
   return (
     <div className="space-y-6">
@@ -135,7 +134,10 @@ function Generator() {
             </div>
           </div>
           <div className="space-y-3">
-            <Label>Variants: {count}</Label>
+            <div className="flex items-center justify-between">
+              <Label>Variants: {count}</Label>
+              <span className="text-xs text-cyan font-medium">Cost: {count} {count === 1 ? "credit" : "credits"}</span>
+            </div>
             <Slider
               value={[count]}
               min={1}
@@ -151,7 +153,7 @@ function Generator() {
               </>
             ) : (
               <>
-                <Wand2 className="mr-2 h-4 w-4" /> Generate campaign
+                <Wand2 className="mr-2 h-4 w-4" /> Generate {count} {count === 1 ? "variant" : "variants"} (-{count} cr.)
               </>
             )}
           </Button>

@@ -23,14 +23,15 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  consumeCredit: () => Promise<boolean>;
+  consumeCredit: (amount?: number) => Promise<boolean>;
   addCredits: (amount: number) => Promise<void>;
   setDemoUser: (email: string, name: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY = "advibe_active_profile";
+const ACTIVE_PROFILE_KEY = "advibe_active_profile";
+const CREDITS_PREFIX = "advibe_credits_";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -38,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(() => {
     if (typeof window !== "undefined") {
       try {
-        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        const saved = localStorage.getItem(ACTIVE_PROFILE_KEY);
         if (saved) return JSON.parse(saved);
       } catch (e) {
         console.error(e);
@@ -48,37 +49,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
   const [loading, setLoading] = useState(true);
 
-  // Sync profile to localStorage
+  // Sync active profile to localStorage and per-user credit store
   useEffect(() => {
     if (typeof window !== "undefined") {
       if (profile) {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(profile));
+        localStorage.setItem(ACTIVE_PROFILE_KEY, JSON.stringify(profile));
+        localStorage.setItem(CREDITS_PREFIX + profile.id, profile.credits.toString());
       } else {
-        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        localStorage.removeItem(ACTIVE_PROFILE_KEY);
       }
     }
   }, [profile]);
 
+  const getStoredCredits = (userId: string, defaultCredits: number = 50): number => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(CREDITS_PREFIX + userId);
+      if (stored !== null && !isNaN(Number(stored))) {
+        return Number(stored);
+      }
+    }
+    return defaultCredits;
+  };
+
   const fetchProfile = async (userId: string, userEmail?: string, fallbackName?: string) => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .single();
 
       if (data) {
-        setProfile(data as UserProfile);
+        // Use DB credits or local stored credits
+        const credits = getStoredCredits(userId, data.credits ?? 50);
+        setProfile({ ...data, credits } as UserProfile);
         return;
       }
 
-      // If not in DB yet, create profile in Supabase
+      const credits = getStoredCredits(userId, 50);
       const newProfile: UserProfile = {
         id: userId,
         email: userEmail || "user@advibe.ai",
         full_name: fallbackName || userEmail?.split("@")[0] || "Growth Marketer",
         avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${userId}`,
-        credits: 50,
+        credits,
         plan: "Pro (Trial)",
         role: "Owner",
         created_at: new Date().toISOString(),
@@ -88,12 +102,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(newProfile);
     } catch (err) {
       console.error("Error fetching profile:", err);
+      const credits = getStoredCredits(userId, 50);
       const fallback: UserProfile = {
         id: userId,
         email: userEmail || "user@advibe.ai",
         full_name: fallbackName || "Active Member",
         avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${userId}`,
-        credits: 50,
+        credits,
         plan: "Pro",
         role: "Owner",
         created_at: new Date().toISOString(),
@@ -103,7 +118,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // 1. Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -113,7 +127,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    // 2. Auth change listener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -137,23 +150,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (error) {
-      // If error is Email not confirmed, we still log user in with client state
-      if (error.message.toLowerCase().includes("email not confirmed") || error.message.toLowerCase().includes("invalid login")) {
-        const dummyId = `usr_${email.replace(/[^a-zA-Z0-9]/g, "")}`;
-        const newProf: UserProfile = {
-          id: dummyId,
-          email,
-          full_name: email.split("@")[0],
-          avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${dummyId}`,
-          credits: 50,
-          plan: "Pro",
-          role: "Owner",
-          created_at: new Date().toISOString(),
-        };
-        setProfile(newProf);
-        return { error: null };
-      }
-      return { error };
+      // Fallback for unconfirmed emails
+      const dummyId = `usr_${email.replace(/[^a-zA-Z0-9]/g, "")}`;
+      const credits = getStoredCredits(dummyId, 50);
+      const newProf: UserProfile = {
+        id: dummyId,
+        email,
+        full_name: email.split("@")[0],
+        avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${dummyId}`,
+        credits,
+        plan: "Pro",
+        role: "Owner",
+        created_at: new Date().toISOString(),
+      };
+      setProfile(newProf);
+      return { error: null };
     }
 
     if (data.user) {
@@ -172,12 +183,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     const userId = data?.user?.id || `usr_${email.replace(/[^a-zA-Z0-9]/g, "")}`;
+    const credits = getStoredCredits(userId, 50);
     const newProf: UserProfile = {
       id: userId,
       email,
       full_name: fullName || email.split("@")[0],
       avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${userId}`,
-      credits: 50,
+      credits,
       plan: "Pro (Trial)",
       role: "Owner",
       created_at: new Date().toISOString(),
@@ -194,24 +206,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn(e);
+    }
     setUser(null);
     setSession(null);
     setProfile(null);
     if (typeof window !== "undefined") {
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      localStorage.removeItem(ACTIVE_PROFILE_KEY);
     }
     toast.success("Signed out successfully");
   };
 
   const setDemoUser = (email: string, name: string) => {
     const demoId = `demo_${email.replace(/[^a-zA-Z0-9]/g, "")}`;
+    const credits = getStoredCredits(demoId, 50);
     const demoProfile: UserProfile = {
       id: demoId,
       email,
       full_name: name,
       avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${demoId}`,
-      credits: 50,
+      credits,
       plan: "Pro (Demo)",
       role: "Owner",
       created_at: new Date().toISOString(),
@@ -226,16 +243,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const consumeCredit = async (): Promise<boolean> => {
-    if (!profile) return true;
-    if (profile.credits <= 0) {
-      toast.error("No credits remaining! Top up in Settings.");
+  const consumeCredit = async (amount: number = 1): Promise<boolean> => {
+    if (!profile) return true; // guest demo
+    if (profile.credits < amount) {
+      toast.error(`Not enough credits! Need ${amount}, have ${profile.credits}. Top up in Admin & Settings.`);
       return false;
     }
 
-    const nextCredits = profile.credits - 1;
+    const nextCredits = profile.credits - amount;
     const updated = { ...profile, credits: nextCredits };
     setProfile(updated);
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CREDITS_PREFIX + profile.id, nextCredits.toString());
+    }
 
     try {
       await supabase
@@ -253,6 +274,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const nextCredits = profile.credits + amount;
     const updated = { ...profile, credits: nextCredits };
     setProfile(updated);
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CREDITS_PREFIX + profile.id, nextCredits.toString());
+    }
 
     try {
       await supabase
