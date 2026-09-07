@@ -28,7 +28,7 @@ export const Route = createFileRoute("/app/analytics")({
       },
     ],
   }),
-  component: Analytics;
+  component: Analytics,
 });
 
 const stats = [
