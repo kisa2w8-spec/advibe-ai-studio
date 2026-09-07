@@ -1,10 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Loader2, Sparkles, Database } from "lucide-react";
+import { Loader2, Sparkles, Database, FolderOpen, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { AdCard } from "@/components/AdCard";
-import { savedLibrary, type GeneratedAd } from "@/lib/advibe-data";
+import { type GeneratedAd } from "@/lib/advibe-data";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Route = createFileRoute("/app/library")({
   head: () => ({
@@ -22,9 +24,12 @@ export const Route = createFileRoute("/app/library")({
 });
 
 function Library() {
+  const { user, profile } = useAuth();
   const [ads, setAds] = useState<GeneratedAd[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCloud, setIsCloud] = useState(false);
+
+  const activeUserId = profile?.id || user?.id || "guest-session";
 
   const fetchAds = async () => {
     setLoading(true);
@@ -32,10 +37,11 @@ function Library() {
       const { data, error } = await supabase
         .from("saved_ads")
         .select("*")
+        .eq("user_id", activeUserId)
         .order("created_at", { ascending: false });
 
-      if (error || !data || data.length === 0) {
-        setAds(savedLibrary);
+      if (error || !data) {
+        setAds([]);
         setIsCloud(false);
       } else {
         const mapped: GeneratedAd[] = data.map((item) => ({
@@ -52,7 +58,7 @@ function Library() {
       }
     } catch (err) {
       console.error(err);
-      setAds(savedLibrary);
+      setAds([]);
     } finally {
       setLoading(false);
     }
@@ -60,7 +66,8 @@ function Library() {
 
   useEffect(() => {
     fetchAds();
-  }, []);
+  }, [activeUserId]);
+
 
   const handleDelete = (id: string) => {
     setAds((prev) => prev.filter((a) => a.id !== id));
@@ -90,6 +97,21 @@ function Library() {
         {loading ? (
           <div className="flex h-40 items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-cyan" />
+          </div>
+        ) : ads.length === 0 ? (
+          <div className="glass flex flex-col items-center justify-center rounded-2xl p-12 text-center">
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-secondary text-muted-foreground mb-3">
+              <FolderOpen className="h-6 w-6" />
+            </div>
+            <h3 className="font-display text-base font-semibold">No saved ads in this account yet</h3>
+            <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+              Generate scored ad variants and click "Save to DB" to store them in your personal library.
+            </p>
+            <Button asChild variant="gradient" size="sm" className="mt-4 gap-1.5">
+              <Link to="/app/generator">
+                <Plus className="h-4 w-4" /> Go to Generator
+              </Link>
+            </Button>
           </div>
         ) : (
           <>

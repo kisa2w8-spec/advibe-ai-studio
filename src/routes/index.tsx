@@ -45,7 +45,14 @@ const rotating = [
   { hook: "Last 48 hours at launch pricing", cta: "Claim your spot →", ctr: 4.8 },
 ];
 
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthModal } from "@/components/AuthModal";
+import { LogIn, UserCheck } from "lucide-react";
+
 function Nav() {
+  const { user, profile } = useAuth();
+  const [authOpen, setAuthOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
       <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-4 sm:flex sm:justify-between">
@@ -66,10 +73,33 @@ function Nav() {
             Pricing
           </a>
         </nav>
-        <Button asChild variant="gradient" size="sm">
-          <Link to="/app/generator">Launch App</Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          {profile ? (
+            <Button asChild variant="outline" size="sm" className="gap-2">
+              <Link to="/app/settings">
+                <UserCheck className="h-3.5 w-3.5 text-cyan" />
+                <span className="max-w-28 truncate">{profile.full_name}</span>
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setAuthOpen(true)}
+            >
+              <LogIn className="h-3.5 w-3.5" />
+              <span>Sign In</span>
+            </Button>
+          )}
+
+          <Button asChild variant="gradient" size="sm">
+            <Link to="/app/generator">Launch App</Link>
+          </Button>
+        </div>
       </div>
+
+      <AuthModal open={authOpen} onOpenChange={setAuthOpen} />
     </header>
   );
 }

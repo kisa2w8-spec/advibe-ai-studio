@@ -21,7 +21,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ open, onOpenChange, defaultTab = "signin" }: AuthModalProps) {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, setDemoUser } = useAuth();
   const [tab, setTab] = useState<"signin" | "signup">(defaultTab);
   const [loading, setLoading] = useState(false);
 
@@ -183,16 +183,36 @@ export function AuthModal({ open, onOpenChange, defaultTab = "signin" }: AuthMod
           </TabsContent>
         </Tabs>
 
-        <div className="mt-4 border-t border-border pt-3">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="w-full text-xs text-muted-foreground hover:text-foreground"
-            onClick={handleQuickDemo}
-          >
-            Fill Demo Credentials
-          </Button>
+        <div className="mt-4 border-t border-border pt-4">
+          <p className="text-center text-[11px] uppercase tracking-wider text-muted-foreground mb-2">
+            Quick 1-Click Test Personas
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={() => {
+                setDemoUser("alex.founder@growth.ai", "Alex Rivers (Founder)");
+                onOpenChange(false);
+              }}
+            >
+              👤 Alex (Account A)
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={() => {
+                setDemoUser("sarah.creator@advibe.io", "Sarah Miller (Creator)");
+                onOpenChange(false);
+              }}
+            >
+              👩‍💻 Sarah (Account B)
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

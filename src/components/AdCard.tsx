@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { GeneratedAd } from "@/lib/advibe-data";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function AdCard({
   ad,
@@ -15,9 +16,12 @@ export function AdCard({
   saved?: boolean;
   onDeleted?: (id: string) => void;
 }) {
+  const { user, profile } = useAuth();
   const [isSaved, setIsSaved] = useState(saved);
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const activeUserId = profile?.id || user?.id || "guest-session";
 
   const copy = async () => {
     await navigator.clipboard?.writeText(`${ad.hook}\n\n${ad.body}\n\n${ad.cta}`);
@@ -30,18 +34,24 @@ export function AdCard({
     setSaving(true);
     try {
       if (isSaved) {
-        // Delete from Supabase
-        const { error } = await supabase.from("saved_ads").delete().eq("hook", ad.hook);
+        // Delete from Supabase for this specific user
+        const { error } = await supabase
+          .from("saved_ads")
+          .delete()
+          .eq("hook", ad.hook)
+          .eq("user_id", activeUserId);
+
         if (!error) {
           setIsSaved(false);
-          toast.success("Removed from Supabase library");
+          toast.success("Removed from your library");
           onDeleted?.(ad.id);
         } else {
           toast.error(`Error removing: ${error.message}`);
         }
       } else {
-        // Insert into Supabase
+        // Insert into Supabase with user_id
         const { error } = await supabase.from("saved_ads").insert({
+          user_id: activeUserId,
           product_name: ad.hook.slice(0, 40),
           platform: ad.platform,
           tone: ad.tone,
@@ -53,7 +63,7 @@ export function AdCard({
 
         if (!error) {
           setIsSaved(true);
-          toast.success("Saved to Supabase database! 🚀");
+          toast.success("Saved to your personal Supabase library! 🚀");
         } else {
           toast.error(`Error saving: ${error.message}`);
         }
@@ -65,6 +75,7 @@ export function AdCard({
       setSaving(false);
     }
   };
+
 
   return (
     <article className="glass flex flex-col rounded-2xl p-5 transition-all duration-300 hover:-translate-y-0.5 hover:glow">
