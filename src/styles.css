@@ -1,7 +1,6 @@
 @import "tailwindcss" source(none);
-@source "../src";
 @import "tw-animate-css";
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap');
+@source "../src";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -36,7 +35,7 @@
   --color-secondary: #181818;
   --color-secondary-foreground: #f0ede8;
   --color-muted: #1c1c1c;
-  --color-muted-foreground: #888888;
+  --color-muted-foreground: #a3a3a3;
   --color-accent: #1e1e1e;
   --color-accent-foreground: #d4ff00;
   --color-destructive: #ef4444;
@@ -79,7 +78,7 @@
   --secondary: #181818;
   --secondary-foreground: #f0ede8;
   --muted: #1c1c1c;
-  --muted-foreground: #888888;
+  --muted-foreground: #a3a3a3;
   --accent: #1e1e1e;
   --accent-foreground: #d4ff00;
   --destructive: #ef4444;

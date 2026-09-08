@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   ShoppingBag,
@@ -57,20 +57,48 @@ const checks = [
 ];
 
 function Onboarding() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [goal, setGoal] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
   const [progress, setProgress] = useState(0);
 
+  // One-time onboarding guard: if already completed, redirect directly to generator
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const completed = localStorage.getItem("advibe_onboarding_completed") === "true";
+      if (completed) {
+        router.navigate({ to: "/app/generator", replace: true });
+      }
+    }
+  }, [router]);
+
   useEffect(() => {
     if (step !== 3) return;
     setProgress(0);
-    const t = setInterval(() => setProgress((p) => (p >= 100 ? 100 : p + 2)), 60);
+    const t = setInterval(() => {
+      setProgress((p) => {
+        if (p >= 100) {
+          if (typeof window !== "undefined") {
+            localStorage.setItem("advibe_onboarding_completed", "true");
+          }
+          return 100;
+        }
+        return p + 2;
+      });
+    }, 60);
     return () => clearInterval(t);
   }, [step]);
 
   const done = progress >= 100;
   const goalLabel = goals.find((g) => g.id === goal)?.label ?? "Growth";
+
+  const handleFinish = () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("advibe_onboarding_completed", "true");
+    }
+    router.navigate({ to: "/app/generator" });
+  };
 
   return (
     <div className="aurora min-h-screen px-5 py-10">
@@ -225,10 +253,12 @@ function Onboarding() {
                       </div>
                     ))}
                   </div>
-                  <Button asChild variant="gradient" size="lg" className="mt-6 w-full sm:w-auto">
-                    <Link to="/app/generator">
-                      Enter dashboard <ArrowRight className="ml-1 h-4 w-4" />
-                    </Link>
+                  <Button
+                    onClick={handleFinish}
+                    className="mt-6 w-full sm:w-auto bg-volt text-ground hover:bg-volt-dim font-semibold"
+                    size="lg"
+                  >
+                    Enter dashboard <ArrowRight className="ml-1 h-4 w-4" />
                   </Button>
                 </div>
               )}

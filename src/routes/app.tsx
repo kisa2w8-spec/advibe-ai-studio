@@ -11,10 +11,10 @@ import {
   LogOut,
   User,
   ShieldCheck,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal } from "@/components/AuthModal";
+import { TopUpModal } from "@/components/TopUpModal";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -41,6 +42,7 @@ const nav = [
 function AppLayout() {
   const { user, profile, signOut } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [topUpModalOpen, setTopUpModalOpen] = useState(false);
 
   const credits = profile?.credits ?? 50;
   const maxCredits = 50;
@@ -61,15 +63,21 @@ function AppLayout() {
                 <Badge
                   variant="glow"
                   className="cursor-pointer whitespace-nowrap"
-                  onClick={() => !profile && setAuthModalOpen(true)}
+                  onClick={() => {
+                    if (profile) {
+                      setTopUpModalOpen(true);
+                    } else {
+                      setAuthModalOpen(true);
+                    }
+                  }}
                 >
-                  <Sparkles className="mr-1 h-3 w-3 text-cyan" />
+                  <Zap className="mr-1 h-3 w-3 text-cyan" />
                   {credits} / {maxCredits} Credits
                 </Badge>
               </TooltipTrigger>
               <TooltipContent>
                 {profile
-                  ? `Live balance for ${profile.full_name}`
+                  ? `Click to top up credits (${profile.full_name})`
                   : "Click to sign in and keep your balance"}
               </TooltipContent>
             </Tooltip>
@@ -89,18 +97,9 @@ function AppLayout() {
                       size="sm"
                       className="gap-2 border-border/80 bg-surface/50 px-2 sm:px-3"
                     >
-                      <Avatar className="h-6 w-6 border border-border">
-                        <AvatarImage
-                          src={
-                            profile.avatar_url ||
-                            `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.id}`
-                          }
-                          alt={profile.full_name}
-                        />
-                        <AvatarFallback>
-                          {profile.full_name.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border bg-secondary">
+                        <User className="h-3 w-3" />
+                      </div>
                       <span className="hidden max-w-[120px] truncate text-xs font-medium sm:inline-block">
                         {profile.full_name}
                       </span>
@@ -120,6 +119,13 @@ function AppLayout() {
                         <User className="mr-2 h-4 w-4" />
                         <span>Account & Admin</span>
                       </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setTopUpModalOpen(true)}
+                      className="cursor-pointer"
+                    >
+                      <Zap className="mr-2 h-4 w-4 text-cyan" />
+                      <span>Top Up AI Credits</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setAuthModalOpen(true)}
@@ -204,6 +210,7 @@ function AppLayout() {
       </nav>
 
       <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
+      <TopUpModal open={topUpModalOpen} onOpenChange={setTopUpModalOpen} />
     </div>
   );
 }

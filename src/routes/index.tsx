@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Sparkles,
@@ -11,8 +11,12 @@ import {
   Zap,
   LogIn,
   LogOut,
-  UserCheck,
+  User,
   ShieldCheck,
+  Layers,
+  BarChart,
+  Shield,
+  Gauge,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,13 +29,13 @@ import { AnimatedHero } from "@/components/ui/animated-hero";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "AdVibe AI — AI-Powered Growth & Ad Creative Platform" },
+      { title: "AdVibe AI — AI Ad Copy & Growth Creative Generator" },
       {
         name: "description",
         content:
-          "Generate high-converting ad copy, viral hooks and CTAs for TikTok, Meta, Google and Shorts.",
+          "AdVibe AI generates high-converting ad copy, viral hooks and CTAs for TikTok, Meta, Google and YouTube Shorts.",
       },
-      { property: "og:title", content: "AdVibe AI — High-Converting Ads in Seconds" },
+      { property: "og:title", content: "AdVibe AI — High-Converting AI Ad Generator" },
     ],
   }),
   component: Landing,
@@ -48,8 +52,22 @@ const rotating = [
 ];
 
 function Nav() {
+  const router = useRouter();
   const { user, profile, signOut } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
+
+  const handleLaunchStudio = () => {
+    if (typeof window !== "undefined") {
+      const completed = localStorage.getItem("advibe_onboarding_completed") === "true";
+      if (completed) {
+        router.navigate({ to: "/app/generator" });
+      } else {
+        router.navigate({ to: "/onboarding" });
+      }
+    } else {
+      router.navigate({ to: "/app/generator" });
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/80 bg-ground/80 backdrop-blur-xl">
@@ -65,9 +83,9 @@ function Nav() {
           <a href="#features" className="transition-colors hover:text-ink">
             Features
           </a>
-          <Link to="/onboarding" className="transition-colors hover:text-ink">
-            Growth Funnel
-          </Link>
+          <a href="#preview" className="transition-colors hover:text-ink">
+            Live Preview
+          </a>
           <a href="#pricing" className="transition-colors hover:text-ink">
             Pricing
           </a>
@@ -78,7 +96,9 @@ function Nav() {
             <div className="flex items-center gap-2">
               <Button asChild variant="outline" size="sm" className="gap-2 border-border bg-card/60">
                 <Link to="/app/settings">
-                  <UserCheck className="h-3.5 w-3.5 text-volt" />
+                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary border border-border">
+                    <User className="h-3 w-3 text-volt" />
+                  </div>
                   <span className="max-w-28 truncate text-xs font-medium text-ink">{profile.full_name}</span>
                 </Link>
               </Button>
@@ -96,7 +116,7 @@ function Nav() {
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 border-border bg-card/60 text-xs font-medium text-ink hover:border-volt/40"
+              className="gap-1.5 border-border bg-card/60 text-xs font-medium text-ink hover:border-volt/40 cursor-pointer"
               onClick={() => setAuthOpen(true)}
             >
               <LogIn className="h-3.5 w-3.5" />
@@ -104,8 +124,12 @@ function Nav() {
             </Button>
           )}
 
-          <Button asChild size="sm" className="bg-volt text-ground hover:bg-volt-dim font-semibold text-xs rounded-lg px-4">
-            <Link to="/app/generator">Launch Studio</Link>
+          <Button
+            size="sm"
+            onClick={handleLaunchStudio}
+            className="bg-volt text-ground hover:bg-volt-dim font-semibold text-xs rounded-lg px-4 cursor-pointer"
+          >
+            Launch Studio
           </Button>
         </div>
       </div>
@@ -135,18 +159,18 @@ function LivePreview() {
   }, [i, current.hook]);
 
   return (
-    <div className="glass max-w-2xl mx-auto rounded-2xl p-5 border border-border sm:p-6">
+    <div id="preview" className="glass max-w-2xl mx-auto rounded-2xl p-5 border border-border sm:p-6 scroll-mt-20">
       <div className="flex items-center justify-between gap-3 pb-3 border-b border-border/80">
-        <div className="flex items-center gap-2 text-xs text-muted">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="h-2 w-2 rounded-full bg-volt animate-ping" />
           <span className="text-ink font-medium">Real-time Ad Generation Engine</span>
         </div>
-        <Badge variant="outline" className="border-border text-[11px] text-muted">
+        <Badge variant="outline" className="border-border text-[11px] text-muted-foreground">
           TikTok · Viral Angle
         </Badge>
       </div>
       <div className="mt-4 rounded-xl border border-border bg-surface p-4">
-        <p className="text-[10px] uppercase tracking-widest text-muted">Generated Hook</p>
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Generated Hook</p>
         <p className="mt-1 min-h-12 font-display text-base sm:text-lg leading-snug text-ink">
           {typed}
           <span className="ml-0.5 inline-block h-4 w-0.5 translate-y-0.5 bg-volt" />
@@ -157,7 +181,7 @@ function LivePreview() {
           </span>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="text-xs text-muted">
+              <span className="text-xs text-muted-foreground">
                 Est. CTR <span className="font-bold text-volt">{current.ctr}%</span>
               </span>
             </TooltipTrigger>
@@ -169,43 +193,39 @@ function LivePreview() {
   );
 }
 
-const features = [
-  {
-    icon: Wand2,
-    title: "Multi-Platform Ad Gen",
-    body: "One brief, native copy for TikTok, Meta, Google Search and YouTube Shorts — tuned to each algorithm's conversion triggers.",
-  },
-  {
-    icon: Flame,
-    title: "Viral Hook Finder",
-    body: "Mines patterns from thousands of top-performing ads and automatically rewrites them around your product angle.",
-  },
-  {
-    icon: Target,
-    title: "Audience Objection Tuning",
-    body: "Specify who you sell to and get angles tailored to counter objections and drive immediate purchase intent.",
-  },
-  {
-    icon: BarChart3,
-    title: "A/B Variant Scorer",
-    body: "Every variant gets an estimated CTR and clarity score, so you launch only the top 3 instead of burning ad budget.",
-  },
-];
-
 function Features() {
+  const list = [
+    {
+      icon: Flame,
+      title: "Hook Pattern Intelligence",
+      body: "Reverse-engineered top 1% ads on TikTok and Meta to give you unstoppable opening lines.",
+    },
+    {
+      icon: Gauge,
+      title: "Real-time Predictive CTR",
+      body: "AI models score each hook, angle and body copy before you launch live campaigns.",
+    },
+    {
+      icon: Layers,
+      title: "Multi-Platform Copywriter",
+      body: "Tailored character counts, tone, and formatting for TikTok, Meta, Google Search & Shorts.",
+    },
+  ];
+
   return (
     <section id="features" className="px-5 py-20 border-t border-border/60">
-      <div className="mx-auto max-w-6xl">
-        <div className="text-center max-w-2xl mx-auto">
-          <Badge variant="outline" className="mb-3 border-border text-volt text-xs">
-            ⚡ Engineered for Media Buyers
+      <div className="mx-auto max-w-5xl">
+        <div className="text-center">
+          <Badge variant="outline" className="border-border text-volt text-xs">
+            Built for High ROAS
           </Badge>
-          <h2 className="font-display text-3xl font-bold sm:text-4xl text-ink">
-            Everything your growth team needs, without the blank page
+          <h2 className="mt-3 font-display text-3xl font-bold sm:text-4xl text-ink">
+            Everything you need to scale paid ads
           </h2>
         </div>
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {features.map((f) => (
+
+        <div className="mt-12 grid gap-6 sm:grid-cols-3">
+          {list.map((f) => (
             <div
               key={f.title}
               className="glass group rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-volt/40"
@@ -214,7 +234,7 @@ function Features() {
                 <f.icon className="h-5 w-5" />
               </span>
               <h3 className="mt-4 font-display text-base font-semibold text-ink">{f.title}</h3>
-              <p className="mt-2 text-xs leading-relaxed text-muted">{f.body}</p>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{f.body}</p>
             </div>
           ))}
         </div>
@@ -224,7 +244,22 @@ function Features() {
 }
 
 function Pricing() {
+  const router = useRouter();
   const [yearly, setYearly] = useState(true);
+
+  const handleLaunchStudio = () => {
+    if (typeof window !== "undefined") {
+      const completed = localStorage.getItem("advibe_onboarding_completed") === "true";
+      if (completed) {
+        router.navigate({ to: "/app/generator" });
+      } else {
+        router.navigate({ to: "/onboarding" });
+      }
+    } else {
+      router.navigate({ to: "/app/generator" });
+    }
+  };
+
   const tiers = [
     {
       name: "Free Trial",
@@ -255,9 +290,9 @@ function Pricing() {
       <div className="mx-auto max-w-4xl text-center">
         <h2 className="font-display text-3xl font-bold sm:text-4xl text-ink">Simple, transparent pricing</h2>
         <div className="mt-6 inline-flex items-center gap-3 rounded-full border border-border bg-card px-4 py-1.5 text-xs text-ink">
-          <span className={yearly ? "text-muted" : "font-semibold"}>Monthly</span>
+          <span className={yearly ? "text-muted-foreground" : "font-semibold"}>Monthly</span>
           <Switch checked={yearly} onCheckedChange={setYearly} aria-label="Toggle yearly billing" />
-          <span className={yearly ? "font-semibold text-volt" : "text-muted"}>Yearly</span>
+          <span className={yearly ? "font-semibold text-volt" : "text-muted-foreground"}>Yearly</span>
           <span className="rounded-full bg-volt/20 text-volt px-2 py-0.5 text-[10px] font-bold">
             Save 20%
           </span>
@@ -276,10 +311,10 @@ function Pricing() {
                   </span>
                 )}
               </div>
-              <p className="mt-1 text-xs text-muted">{t.blurb}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t.blurb}</p>
               <p className="mt-5 font-display text-4xl font-bold text-ink">
                 ${t.price}
-                <span className="text-xs font-normal text-muted">
+                <span className="text-xs font-normal text-muted-foreground">
                   /mo{t.price > 0 && yearly ? ", billed yearly" : ""}
                 </span>
               </p>
@@ -292,12 +327,12 @@ function Pricing() {
                 ))}
               </ul>
               <Button
-                asChild
-                className={`mt-7 w-full rounded-xl font-semibold text-xs ${t.featured ? "bg-volt text-ground hover:bg-volt-dim" : "border-border bg-card text-ink hover:bg-secondary"}`}
+                onClick={handleLaunchStudio}
+                className={`mt-7 w-full rounded-xl font-semibold text-xs cursor-pointer ${t.featured ? "bg-volt text-ground hover:bg-volt-dim" : "border-border bg-card text-ink hover:bg-secondary"}`}
                 variant={t.featured ? "default" : "outline"}
                 size="lg"
               >
-                <Link to="/app/generator">{t.cta}</Link>
+                {t.cta}
               </Button>
             </div>
           ))}
@@ -319,12 +354,12 @@ function Landing() {
         <Features />
         <Pricing />
       </main>
-      <footer className="border-t border-border px-5 py-8 text-xs text-muted">
+      <footer className="border-t border-border px-5 py-8 text-xs text-muted-foreground">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
           <span>© 2026 AdVibe AI · AI-First Growth Engine</span>
-          <Link to="/onboarding" className="hover:text-ink">
-            Interactive Funnel Demo →
-          </Link>
+          <a href="#preview" className="hover:text-ink transition-colors">
+            Live Engine Preview →
+          </a>
         </div>
       </footer>
     </div>

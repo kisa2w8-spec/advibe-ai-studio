@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { MoveRight, Sparkles, Wand2, Zap, ArrowRight } from "lucide-react";
+import { MoveRight, Sparkles, Wand2, Zap, ArrowRight, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 
 function AnimatedHero() {
+  const router = useRouter();
   const [titleNumber, setTitleNumber] = useState(0);
   const titles = useMemo(
     () => [
@@ -16,6 +17,19 @@ function AnimatedHero() {
     ],
     []
   );
+
+  const handleLaunchStudio = () => {
+    if (typeof window !== "undefined") {
+      const completed = localStorage.getItem("advibe_onboarding_completed") === "true";
+      if (completed) {
+        router.navigate({ to: "/app/generator" });
+      } else {
+        router.navigate({ to: "/onboarding" });
+      }
+    } else {
+      router.navigate({ to: "/app/generator" });
+    }
+  };
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -44,18 +58,16 @@ function AnimatedHero() {
             transition={{ duration: 0.5 }}
           >
             <Button
-              asChild
               variant="outline"
               size="sm"
-              className="gap-2 rounded-full border-border/80 bg-card/60 px-4 py-1.5 text-xs text-foreground backdrop-blur-md transition-colors hover:border-volt/50 hover:bg-card"
+              onClick={handleLaunchStudio}
+              className="gap-2 rounded-full border-border/80 bg-card/60 px-4 py-1.5 text-xs text-foreground backdrop-blur-md transition-colors hover:border-volt/50 hover:bg-card cursor-pointer"
             >
-              <Link to="/onboarding">
-                <span className="flex h-2 w-2 rounded-full bg-volt animate-pulse" />
-                <span className="font-medium text-foreground">
-                  ⚡ Powered by GPT-4o &amp; Claude 3.7 Sonnet
-                </span>
-                <MoveRight className="h-3.5 w-3.5 text-volt" />
-              </Link>
+              <span className="flex h-2 w-2 rounded-full bg-volt animate-pulse" />
+              <span className="font-medium text-foreground">
+                ⚡ Powered by GPT-4o &amp; Claude 3.7 Sonnet
+              </span>
+              <MoveRight className="h-3.5 w-3.5 text-volt" />
             </Button>
           </motion.div>
 
@@ -90,7 +102,7 @@ function AnimatedHero() {
               <span>ads in seconds</span>
             </h1>
 
-            <p className="mx-auto mt-2 max-w-2xl text-base sm:text-lg leading-relaxed text-muted font-normal">
+            <p className="mx-auto mt-2 max-w-2xl text-base sm:text-lg leading-relaxed text-muted-foreground font-normal">
               AdVibe AI engineers platform-native hooks, body copy and high-ROAS CTAs for
               TikTok, Meta, Google and YouTube Shorts — scored before you spend a single dollar.
             </p>
@@ -99,24 +111,24 @@ function AnimatedHero() {
           {/* Action Buttons */}
           <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
             <Button
-              asChild
               size="lg"
-              className="gap-2.5 rounded-xl bg-volt text-ground font-semibold hover:bg-volt-dim px-6 transition-all duration-200 shadow-lg shadow-volt/20 hover:scale-[1.02]"
+              onClick={handleLaunchStudio}
+              className="gap-2.5 rounded-xl bg-volt text-ground font-semibold hover:bg-volt-dim px-7 transition-all duration-200 shadow-lg shadow-volt/20 hover:scale-[1.02] cursor-pointer"
             >
-              <Link to="/onboarding">
-                Build growth blueprint <ArrowRight className="h-4 w-4" />
-              </Link>
+              <Wand2 className="h-4 w-4 text-ground" />
+              <span>Launch Studio</span>
+              <ArrowRight className="h-4 w-4" />
             </Button>
 
             <Button
               asChild
               size="lg"
               variant="outline"
-              className="gap-2 rounded-xl border-border bg-card/80 text-ink hover:bg-secondary hover:text-foreground px-6"
+              className="gap-2 rounded-xl border-border bg-card/80 text-ink hover:bg-secondary hover:text-foreground px-6 cursor-pointer"
             >
-              <Link to="/app/generator">
-                <Wand2 className="h-4 w-4 text-volt" /> Open Studio
-              </Link>
+              <a href="#pricing">
+                <Layers className="h-4 w-4 text-volt" /> View Pricing
+              </a>
             </Button>
           </div>
 
@@ -124,15 +136,15 @@ function AnimatedHero() {
           <div className="mt-8 grid grid-cols-3 gap-6 sm:gap-12 border-t border-border/80 pt-6 max-w-lg">
             <div>
               <p className="font-display text-2xl sm:text-3xl font-bold text-volt">4.2x</p>
-              <p className="text-xs text-muted">ROAS boost</p>
+              <p className="text-xs text-muted-foreground">ROAS boost</p>
             </div>
             <div>
               <p className="font-display text-2xl sm:text-3xl font-bold text-ink">50k+</p>
-              <p className="text-xs text-muted">ads generated</p>
+              <p className="text-xs text-muted-foreground">ads generated</p>
             </div>
             <div>
               <p className="font-display text-2xl sm:text-3xl font-bold text-ink">12 min</p>
-              <p className="text-xs text-muted">avg campaign build</p>
+              <p className="text-xs text-muted-foreground">avg campaign build</p>
             </div>
           </div>
         </div>
